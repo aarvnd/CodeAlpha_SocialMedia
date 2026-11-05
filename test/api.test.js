@@ -7,7 +7,7 @@ let server, base;
 before(() => new Promise(r => { server = app.listen(0, () => { base = `http://localhost:${server.address().port}`; r(); }); }));
 after(() => server.close());
 
-// Tiny client that remembers its own session cookie
+// fetch wrapper that keeps its own cookie, so each one acts like a different user
 function client() {
   let cookie = '';
   return async (method, url, body) => {
@@ -32,7 +32,7 @@ test('full social flow: register, post, like, comment, follow, feed', async () =
   const post = (await alice('POST', '/api/posts', { body: 'Hello world' })).data;
   assert.equal(post.username, 'alice');
 
-  // Bob does not follow Alice yet -> empty following feed, but sees it in "all"
+  // bob isn't following alice yet so his feed is empty, but 'all' shows the post
   assert.equal((await bob('GET', '/api/feed')).data.length, 0);
   assert.equal((await bob('GET', '/api/feed?scope=all')).data.length, 1);
 
@@ -40,7 +40,7 @@ test('full social flow: register, post, like, comment, follow, feed', async () =
   assert.equal((await bob('GET', '/api/feed')).data.length, 1);
   assert.equal((await alice('POST', '/api/users/alice/follow')).status, 400);
 
-  // Like toggles on and off
+  // like twice = unlike
   assert.deepEqual((await bob('POST', `/api/posts/${post.id}/like`)).data, { liked: true, like_count: 1 });
   assert.deepEqual((await bob('POST', `/api/posts/${post.id}/like`)).data, { liked: false, like_count: 0 });
 
@@ -48,7 +48,7 @@ test('full social flow: register, post, like, comment, follow, feed', async () =
   const comments = (await alice('GET', `/api/posts/${post.id}/comments`)).data;
   assert.equal(comments[0].username, 'bob');
 
-  // Only the owner can delete
+  // bob can't delete alice's post
   assert.equal((await bob('DELETE', `/api/posts/${post.id}`)).status, 404);
   const profile = (await bob('GET', '/api/users/alice')).data;
   assert.equal(profile.followers, 1);

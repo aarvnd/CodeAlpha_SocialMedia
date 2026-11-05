@@ -2,48 +2,48 @@ const { DatabaseSync } = require('node:sqlite');
 
 const db = new DatabaseSync(process.env.DB_FILE || 'social.db');
 db.exec(`
-  PRAGMA journal_mode = WAL;
-  PRAGMA foreign_keys = ON;
+  pragma journal_mode = wal;
+  pragma foreign_keys = on;
 
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL COLLATE NOCASE,
-    password_hash TEXT NOT NULL,
-    bio TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  create table if not exists users (
+    id integer primary key,
+    username text unique not null collate nocase,
+    password_hash text not null,
+    bio text not null default '',
+    created_at text not null default current_timestamp
   );
-  CREATE TABLE IF NOT EXISTS sessions (
-    token TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    expires_at INTEGER NOT NULL
+  create table if not exists sessions (
+    token text primary key,
+    user_id integer not null references users(id) on delete cascade,
+    expires_at integer not null
   );
-  CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    body TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  create table if not exists posts (
+    id integer primary key,
+    user_id integer not null references users(id) on delete cascade,
+    body text not null,
+    created_at text not null default current_timestamp
   );
-  CREATE TABLE IF NOT EXISTS comments (
-    id INTEGER PRIMARY KEY,
-    post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    body TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  create table if not exists comments (
+    id integer primary key,
+    post_id integer not null references posts(id) on delete cascade,
+    user_id integer not null references users(id) on delete cascade,
+    body text not null,
+    created_at text not null default current_timestamp
   );
-  -- composite primary keys: the same user can like a post / follow a person only once
-  CREATE TABLE IF NOT EXISTS likes (
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, post_id)
+  -- pk on both columns so you can't like/follow the same thing twice
+  create table if not exists likes (
+    user_id integer not null references users(id) on delete cascade,
+    post_id integer not null references posts(id) on delete cascade,
+    primary key (user_id, post_id)
   );
-  CREATE TABLE IF NOT EXISTS follows (
-    follower_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    following_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    PRIMARY KEY (follower_id, following_id),
-    CHECK (follower_id <> following_id)
+  create table if not exists follows (
+    follower_id integer not null references users(id) on delete cascade,
+    following_id integer not null references users(id) on delete cascade,
+    primary key (follower_id, following_id),
+    check (follower_id <> following_id)
   );
-  CREATE INDEX IF NOT EXISTS idx_posts_user ON posts(user_id, id);
-  CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id, id);
+  create index if not exists idx_posts_user on posts(user_id, id);
+  create index if not exists idx_comments_post on comments(post_id, id);
 `);
 
 module.exports = db;

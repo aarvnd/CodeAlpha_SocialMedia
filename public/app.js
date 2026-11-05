@@ -1,4 +1,4 @@
-// ---------- helpers ----------
+// helpers
 async function api(method, url, body) {
   const res = await fetch(url, {
     method,
@@ -11,8 +11,7 @@ async function api(method, url, body) {
   return data;
 }
 
-// h('div', {class: 'x', onclick: fn}, child1, 'text') -> element.
-// Strings become text nodes, so user content can never inject HTML.
+// small helper to build elements. strings go in as text so nobody can inject html
 function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
@@ -41,7 +40,7 @@ function toast(msg) {
   setTimeout(() => t.remove(), 3000);
 }
 
-// ---------- post card ----------
+// post card
 function renderPost(p) {
   const likeBtn = h('button', { class: 'act' + (p.liked_by_me ? ' on' : ''), 'aria-pressed': String(!!p.liked_by_me) },
     '♥ ', h('span', {}, String(p.like_count)));
@@ -95,7 +94,7 @@ async function loadComments(p, box, counterBtn) {
 
 const renderComment = c => h('li', {}, userLink(c.username), ' ', h('span', {}, c.body), h('time', {}, timeAgo(c.created_at)));
 
-// ---------- pages ----------
+// pages
 async function initNav() {
   const me = await api('GET', '/api/me');
   document.getElementById('me-link').href = `/profile?u=${encodeURIComponent(me.username)}`;
