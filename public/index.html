@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/style.css">
+  <title>Feed · Pulse</title>
+</head>
+<body data-page="feed">
+  <nav class="top">
+    <a href="/" class="brand">Pulse</a>
+    <div class="links">
+      <a href="/">Feed</a>
+      <a id="me-link" href="#">My profile</a>
+      <button id="logout" class="btn small ghost">Log out</button>
+    </div>
+  </nav>
+  <main class="layout">
+    <div class="col">
+      <form id="composer" class="card composer">
+        <label for="post-body" class="sr-only">New post</label>
+        <textarea id="post-body" maxlength="500" rows="3" placeholder="What's on your mind?" required></textarea>
+        <div class="row"><span class="count muted">0/500</span><button class="btn">Post</button></div>
+      </form>
+      <div class="tabs" role="tablist">
+        <button role="tab" data-scope="following" aria-selected="true">Following</button>
+        <button role="tab" data-scope="all" aria-selected="false">Everyone</button>
+      </div>
+      <div id="feed" aria-live="polite"></div>
+    </div>
+    <aside class="card side">
+      <h2>Who to follow</h2>
+      <ul id="suggest" class="people"></ul>
+    </aside>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
