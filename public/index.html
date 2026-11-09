@@ -3,33 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/style.css">
+  <meta name="description" content="Pulse is a small social network: write short posts, comment, like and follow people.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@800&family=Manrope:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <title>Feed · Pulse</title>
 </head>
 <body data-page="feed">
-  <nav class="top">
-    <a href="/" class="brand">Pulse</a>
-    <div class="links">
-      <a href="/">Feed</a>
-      <a id="me-link" href="#">My profile</a>
-      <button id="logout" class="btn small ghost">Log out</button>
+  <header class="top">
+    <div class="top__inner">
+      <a href="/" class="wordmark" aria-label="Pulse home">Pulse</a>
+      <nav aria-label="Main">
+        <a href="/" class="pill" aria-current="page">Feed</a>
+        <a id="me-link" href="#" class="pill">My profile</a>
+        <button id="logout" type="button" class="btn btn--small">Log out</button>
+      </nav>
     </div>
-  </nav>
+  </header>
   <main class="layout">
     <div class="col">
-      <form id="composer" class="card composer">
-        <label for="post-body" class="sr-only">New post</label>
-        <textarea id="post-body" maxlength="500" rows="3" placeholder="What's on your mind?" required></textarea>
-        <div class="row"><span class="count muted">0/500</span><button class="btn">Post</button></div>
+      <form id="composer" class="composer">
+        <h1><label for="post-body">What are you up to?</label></h1>
+        <textarea id="post-body" maxlength="500" rows="3" placeholder="Write a post…" required></textarea>
+        <div class="row"><span class="count">0/500</span><button class="btn btn--primary">Post</button></div>
       </form>
-      <div class="tabs" role="tablist">
-        <button role="tab" data-scope="following" aria-selected="true">Following</button>
-        <button role="tab" data-scope="all" aria-selected="false">Everyone</button>
+      <div class="tabs" role="tablist" aria-label="Feed">
+        <button type="button" role="tab" data-scope="following" aria-selected="true">Following</button>
+        <button type="button" role="tab" data-scope="all" aria-selected="false">Everyone</button>
       </div>
-      <div id="feed" aria-live="polite"></div>
+      <div id="feed" aria-live="polite" aria-busy="true">
+        <div class="skeleton" aria-hidden="true"></div>
+        <div class="skeleton" aria-hidden="true"></div>
+      </div>
     </div>
-    <aside class="card side">
-      <h2>Who to follow</h2>
+    <aside class="side" aria-labelledby="suggest-head">
+      <h2 id="suggest-head">Who to follow</h2>
       <ul id="suggest" class="people"></ul>
     </aside>
   </main>

@@ -3,19 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/style.css">
+  <meta name="description" content="Pulse is a small social network: write short posts, comment, like and follow people.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@800&family=Manrope:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <title>Profile · Pulse</title>
 </head>
 <body data-page="profile">
-  <nav class="top">
-    <a href="/" class="brand">Pulse</a>
-    <div class="links">
-      <a href="/">Feed</a>
-      <a id="me-link" href="#">My profile</a>
-      <button id="logout" class="btn small ghost">Log out</button>
+  <header class="top">
+    <div class="top__inner">
+      <a href="/" class="wordmark" aria-label="Pulse home">Pulse</a>
+      <nav aria-label="Main">
+        <a href="/" class="pill">Feed</a>
+        <a id="me-link" href="#" class="pill" aria-current="page">My profile</a>
+        <button id="logout" type="button" class="btn btn--small">Log out</button>
+      </nav>
     </div>
-  </nav>
-  <main class="layout single"><div id="profile" class="col"></div></main>
+  </header>
+  <main class="layout single"><div id="profile" class="col"><div class="skeleton" aria-hidden="true"></div></div></main>
   <script src="/app.js"></script>
 </body>
 </html>

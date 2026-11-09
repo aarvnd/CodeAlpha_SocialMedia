@@ -30,8 +30,20 @@ function timeAgo(sqlTime) {
   return `${Math.floor(s / 86400)}d`;
 }
 
-const avatar = (name, big) => h('span', { class: big ? 'avatar big' : 'avatar', style: `--hue:${hue(name)}` }, name[0].toUpperCase());
-const hue = name => [...name].reduce((a, c) => a + c.charCodeAt(0), 0) * 37 % 360;
+const avatar = (name, big) => h('span', { class: big ? 'avatar big' : 'avatar', 'aria-hidden': 'true' }, name[0].toUpperCase());
+
+// tiny inline svg icons (h() makes html elements, svg needs its own namespace)
+function icon(d) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS(svg.namespaceURI, 'path');
+  path.setAttribute('d', d);
+  svg.append(path);
+  return svg;
+}
+const heart = 'M12 20s-7-4.4-8.7-8.8C2 7.8 4.1 4.6 7.3 4.6c1.9 0 3.4 1 4.7 2.8 1.3-1.8 2.8-2.8 4.7-2.8 3.2 0 5.3 3.2 4 6.6C19 15.6 12 20 12 20z';
+const bubble = 'M4 5h16v11H10l-5 4v-4H4z';
 const userLink = name => h('a', { href: `/profile?u=${encodeURIComponent(name)}`, class: 'user' }, '@' + name);
 
 function toast(msg) {
@@ -42,9 +54,10 @@ function toast(msg) {
 
 // post card
 function renderPost(p) {
-  const likeBtn = h('button', { class: 'act' + (p.liked_by_me ? ' on' : ''), 'aria-pressed': String(!!p.liked_by_me) },
-    '♥ ', h('span', {}, String(p.like_count)));
-  const commentBtn = h('button', { class: 'act', 'aria-expanded': 'false' }, '💬 ', h('span', {}, String(p.comment_count)));
+  const likeBtn = h('button', { type: 'button', class: 'act' + (p.liked_by_me ? ' on' : ''), 'aria-pressed': String(!!p.liked_by_me), 'aria-label': 'Like' },
+    icon(heart), h('span', {}, String(p.like_count)));
+  const commentBtn = h('button', { type: 'button', class: 'act', 'aria-expanded': 'false', 'aria-label': 'Comments' },
+    icon(bubble), h('span', {}, String(p.comment_count)));
   const commentsBox = h('div', { class: 'comments', hidden: true });
 
   likeBtn.onclick = async () => {
@@ -61,13 +74,13 @@ function renderPost(p) {
     if (open) loadComments(p, commentsBox, commentBtn);
   };
 
-  const card = h('article', { class: 'card post' },
-    h('header', {}, avatar(p.username), userLink(p.username), h('time', {}, timeAgo(p.created_at)),
-      !!p.mine && h('button', { class: 'del', 'aria-label': 'Delete post', onclick: async () => {
+  const card = h('article', { class: 'post' },
+    h('header', {}, avatar(p.username), h('div', { class: 'who' }, userLink(p.username), h('time', {}, timeAgo(p.created_at))),
+      !!p.mine && h('button', { type: 'button', class: 'del', onclick: async () => {
         if (!confirm('Delete this post?')) return;
         await api('DELETE', `/api/posts/${p.id}`);
         card.remove();
-      } }, '✕')),
+      } }, 'Delete')),
     h('p', { class: 'body' }, p.body),
     h('footer', {}, likeBtn, commentBtn),
     commentsBox);
@@ -86,7 +99,7 @@ async function loadComments(p, box, counterBtn) {
       input.value = '';
       counterBtn.lastChild.textContent = list.children.length;
     } catch (err) { toast(err.message); }
-  } }, input, h('button', { class: 'btn small' }, 'Reply'));
+  } }, input, h('button', { class: 'btn btn--small' }, 'Reply'));
   box.replaceChildren(list, form);
   const comments = await api('GET', `/api/posts/${p.id}/comments`);
   list.append(...comments.map(renderComment));
@@ -112,7 +125,8 @@ async function feedPage() {
     const posts = await api('GET', `/api/feed?scope=${scope}`);
     feed.replaceChildren(...(posts.length ? posts.map(renderPost)
       : [h('p', { class: 'empty' }, scope === 'following'
-        ? 'Your feed is empty. Follow people or switch to "Everyone".' : 'No posts yet. Be the first!')]));
+        ? 'Your feed is empty. Follow people or switch to “Everyone”.' : 'No posts yet. Write the first one.')]));
+    feed.setAttribute('aria-busy', 'false');
   }
   tabs.forEach(t => t.onclick = () => {
     scope = t.dataset.scope;
@@ -137,11 +151,11 @@ async function feedPage() {
   const suggest = document.getElementById('suggest');
   const people = await api('GET', '/api/users');
   suggest.replaceChildren(...(people.length ? people.map(u => h('li', {}, avatar(u.username), userLink(u.username),
-    h('button', { class: 'btn small ghost', onclick: async e => {
+    h('button', { type: 'button', class: 'btn btn--small', onclick: async e => {
       const r = await api('POST', `/api/users/${encodeURIComponent(u.username)}/follow`);
       e.target.textContent = r.following ? 'Following' : 'Follow';
       load();
-    } }, 'Follow'))) : [h('li', { class: 'muted' }, 'You follow everyone 🎉')]));
+    } }, 'Follow'))) : [h('li', { class: 'muted' }, 'You follow everyone here.')]));
 
   load();
 }
@@ -154,15 +168,16 @@ async function profilePage() {
   try { u = await api('GET', `/api/users/${encodeURIComponent(name)}`); }
   catch (err) { root.replaceChildren(h('p', { class: 'empty' }, err.message)); return; }
   document.title = `@${u.username} · Pulse`;
+  if (!u.is_me) document.getElementById('me-link').removeAttribute('aria-current');
 
-  const followers = h('b', {}, String(u.followers));
+  const followers = h('dd', {}, String(u.followers));
   const bio = h('p', { class: 'bio' }, u.bio || (u.is_me ? 'Add a short bio about yourself.' : ''));
   let action;
   if (u.is_me) {
-    action = h('button', { class: 'btn ghost', onclick: () => {
+    action = h('button', { type: 'button', class: 'btn', onclick: () => {
       const input = h('textarea', { maxlength: 160, rows: 2, 'aria-label': 'Bio' });
       input.value = u.bio;
-      const save = h('button', { class: 'btn small', onclick: async () => {
+      const save = h('button', { type: 'button', class: 'btn btn--small btn--primary', onclick: async () => {
         const r = await api('PATCH', '/api/me', { bio: input.value });
         u.bio = r.bio;
         bio.textContent = r.bio || 'Add a short bio about yourself.';
@@ -173,23 +188,23 @@ async function profilePage() {
       input.focus();
     } }, 'Edit bio');
   } else {
-    action = h('button', { class: u.followed_by_me ? 'btn ghost' : 'btn' }, u.followed_by_me ? 'Unfollow' : 'Follow');
+    action = h('button', { type: 'button', class: u.followed_by_me ? 'btn' : 'btn btn--primary' }, u.followed_by_me ? 'Unfollow' : 'Follow');
     action.onclick = async () => {
       const r = await api('POST', `/api/users/${encodeURIComponent(u.username)}/follow`);
       action.textContent = r.following ? 'Unfollow' : 'Follow';
-      action.className = r.following ? 'btn ghost' : 'btn';
+      action.className = r.following ? 'btn' : 'btn btn--primary';
       followers.textContent = r.followers;
     };
   }
 
   root.replaceChildren(
-    h('section', { class: 'card profile-head' },
+    h('section', { class: 'profile-head' },
       avatar(u.username, true),
       h('div', { class: 'who' }, h('h1', {}, '@' + u.username), bio,
-        h('div', { class: 'stats' },
-          h('span', {}, h('b', {}, String(u.posts.length)), ' posts'),
-          h('span', {}, followers, ' followers'),
-          h('span', {}, h('b', {}, String(u.following)), ' following'))),
+        h('dl', { class: 'stats' },
+          h('div', {}, h('dt', {}, 'posts'), h('dd', {}, String(u.posts.length))),
+          h('div', {}, h('dt', {}, 'followers'), followers),
+          h('div', {}, h('dt', {}, 'following'), h('dd', {}, String(u.following))))),
       action),
     ...(u.posts.length ? u.posts.map(renderPost) : [h('p', { class: 'empty' }, 'No posts yet.')]));
 }
